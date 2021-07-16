@@ -14,8 +14,8 @@ resource "aws_launch_template" "this" {
   key_name = var.key_name
   ram_disk_id = var.ram_disk_id
 
-  security_group_names = var.security_group_names
-  vpc_security_group_ids = var.vpc_security_group_ids
+  security_group_names = var.security_group_names # Classic
+  vpc_security_group_ids = var.vpc_security_group_ids # VPC
 
   tags = merge(
     var.additional_tag,{
@@ -32,7 +32,7 @@ resource "aws_launch_template" "this" {
       virtual_name = block_device_mappings.value["virtual_name"]
 
       dynamic "ebs" {
-        for_each = block_device_mappings.value.ebs
+        for_each = block_device_mappings.value.ebs != null ? toset([block_device_mappings.value.ebs]) : toset([])
         content {
           delete_on_termination = ebs.value["delete_on_termination"]
           encrypted = ebs.value["encrypted"]
@@ -107,7 +107,7 @@ resource "aws_launch_template" "this" {
   }
 
   dynamic "iam_instance_profile" {
-    for_each = var.iam_instance_profile
+    for_each = var.iam_instance_profile == {} ? toset([]) : toset([var.iam_instance_profile])
     content {
       arn = iam_instance_profile.value["arn"]
       name = iam_instance_profile.value["name"]
@@ -198,6 +198,12 @@ resource "aws_launch_template" "this" {
     tags = {Name = join("-", compact(["vol", local.name_tag_middle, var.name]))}
   }
 
+  # to be one of [instance volume spot-instances-request elastic-gpu]
+  # tag_specifications {
+  #   resource_type = "network-interface"
+  #   tags = {Name = join("-", compact(["eni", local.name_tag_middle, var.name]))}
+  # }
+
   dynamic "tag_specifications" {
     for_each = var.tag_specifications
     content {
@@ -205,4 +211,10 @@ resource "aws_launch_template" "this" {
       tags = tag_specifications.value["tags"]
     }
   }
+
+  # lifecycle {
+  #   ignore_changes = [
+  #     security_group_names
+  #   ]
+  # }
 }

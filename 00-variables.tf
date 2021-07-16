@@ -1,22 +1,26 @@
-##########
+##################################################
 # Shared
 variable "name_tag_convention" {
-  description = "Name tag convention"
+  description = "The name tag convention of all resources."
   type = object({
     project_name   = string
     stage          = string
   })
+  default = {
+    project_name = "tf"
+    stage        = "poc"
+  }
 }
 
 variable "additional_tag" {
-  description = "(optional)"
+  description = "Additional tags for all resources."
   type        = map(string)
   default     = {}
 }
-##########
+##################################################
 
 
-##########
+##################################################
 # Launch template
 variable "default_version" {
   description = "(optional)"
@@ -85,7 +89,7 @@ variable "ram_disk_id" {
 }
 
 variable "security_group_names" {
-  description = "(optional)"
+  description = "(optional) For EC2-Classic"
   type        = set(string)
   default     = null
 }
@@ -113,20 +117,20 @@ variable "block_device_mappings" {
   type = set(object(
     {
       device_name = string
-      ebs = list(object(
+      ebs = optional(object(
         {
-          delete_on_termination = string
-          encrypted             = string
-          iops                  = number
-          kms_key_id            = string
-          snapshot_id           = string
-          throughput            = number
           volume_size           = number
-          volume_type           = string
+          volume_type           = optional(string)
+          delete_on_termination = optional(bool)
+          encrypted             = optional(bool)
+          iops                  = optional(number)
+          kms_key_id            = optional(string)
+          snapshot_id           = optional(string)
+          throughput            = optional(number)
         }
       ))
-      no_device    = string
-      virtual_name = string
+      no_device    = optional(string)
+      virtual_name = optional(string)
     }
   ))
   default = []
@@ -210,13 +214,13 @@ variable "hibernation_options" {
 
 variable "iam_instance_profile" {
   description = "nested block: NestingList, min items: 0, max items: 1"
-  type = set(object(
+  type = object(
     {
-      arn  = string
-      name = string
+      arn  = optional(string)
+      name = optional(string)
     }
-  ))
-  default = []
+  )
+  default = {}
 }
 
 variable "instance_market_options" {
@@ -318,3 +322,4 @@ variable "tag_specifications" {
   ))
   default = []
 }
+##################################################
